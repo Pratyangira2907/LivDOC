@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# innovix
-=======
 # Innovix (LiveDoc AI)
 
 Innovix is a multi-tenant documentation assistant that analyzes GitHub repositories and generates:
@@ -145,4 +142,3 @@ Yes. If backend is deployed to Render/Vercel stack, local MongoDB (`localhost`) 
 - Use strong `JWT_SECRET_KEY`
 - Restrict CORS origins in production
 - Do not commit `.env`
->>>>>>> f7ef3bc (Livdoc deployment changes)

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-const API_BASE_URL = 'http://127.0.0.1:8000';
-=======
 const API_BASE_URL = 'https://livedoc-technofest-2026.onrender.com';
->>>>>>> f7ef3bc (Livdoc deployment changes)
 const TOKEN_STORAGE_KEY = 'livedoc_jwt_token';
 const EMAIL_STORAGE_KEY = 'livedoc_user_email';
 
@@ -108,14 +104,5 @@ form.addEventListener("submit", function(e){
 
 // Handle Register Click
 registerBtn.addEventListener('click', () => {
-<<<<<<< HEAD
-    // If the html form validation passes natively, or if we want to force it
-    if (form.checkValidity()) {
-        performAuthAction('/register', emailInput.value, passwordInput.value);
-    } else {
-        form.reportValidity();
-    }
-=======
     window.location.href = "register.html";
->>>>>>> f7ef3bc (Livdoc deployment changes)
 });

@@ -1,28 +1,12 @@
-<<<<<<< HEAD
-import google.generativeai as genai
-import os
-import json
-from typing import Any, Dict, List, Optional
-=======
 import os
 import json
 import httpx
 from typing import Any, Dict, List, Optional
 from openai import AsyncOpenAI, APIConnectionError, APIError
->>>>>>> f7ef3bc (Livdoc deployment changes)
 
 
 class AIService:
     def __init__(self):
-<<<<<<< HEAD
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is not set")
-            
-        genai.configure(api_key=api_key)
-        # Using Gemini 2.5 Flash as requested, prefixed with models/
-        self.model = genai.GenerativeModel('models/gemini-2.5-flash')
-=======
         api_key = os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY")
         if not api_key or api_key.strip() in ("your_grok_api_key_here", "your_api_key_here", "YOUR_GROK_API_KEY"):
             raise ValueError("GROK_API_KEY is not configured in backend/.env. Please set your xAI API key from https://console.x.ai.")
@@ -36,7 +20,6 @@ class AIService:
 
         http_client = httpx.AsyncClient(verify=verify_ssl, timeout=httpx.Timeout(120.0, connect=30.0))
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, http_client=http_client)
->>>>>>> f7ef3bc (Livdoc deployment changes)
 
     async def generate_documentation(self, codebase_analysis: list[dict], repos_context: str) -> str:
         # Prepare the prompt payload based on what the parser extracted
@@ -58,25 +41,6 @@ Here is the breakdown of the files across the system:
 
         prompt += """
 Based on the above architecture, please generate a comprehensive README and internal technical documentation for this system.
-<<<<<<< HEAD
-Your output MUST format beautifully in Markdown.
-
-CRITICAL for Mermaid.js (version 11.12.3 compatibility):
-- You MUST include **two** separate Mermaid diagrams:
-    1) A **Cross-Repo Core Architecture flowchart** showing how the main repositories, components, and files of the project interact. If multiple repositories were provided, emphasize how they communicate with each other.
-    2) A **Request Lifecycle Sequence Diagram** that traces an end-to-end flow across the system.
-- Every diagram MUST be provided as a fenced code block in pure Mermaid syntax, like this:
-
-```mermaid
-flowchart LR
-    ...
-```
-
-- INSIDE the ```mermaid fenced code block you MUST NOT place any prose, titles, sentences, or markdown – ONLY valid Mermaid syntax.
-- CRITICAL for Node text: Since file names now include bracketed repository names like [frontend-repo], you MUST wrap all node display text in double quotes to prevent syntax errors. Example:
-    Correct: nodeID["[frontend-repo] main.js"]
-    Wrong: nodeID[[frontend-repo] main.js]
-=======
 Your output MUST format beautifully in Markdown with thorough, multi-paragraph explanations for each section.
 
 CRITICAL for Mermaid.js (version 11.12.3 compatibility):
@@ -98,7 +62,6 @@ flowchart LR
     Wrong: A[[frontend-repo] main.js]
 - Do not use unsupported Mermaid features such as C4 diagrams, HTML tags, callouts, markdown bullets, or non-ASCII characters inside diagram labels.
 - Keep node IDs simple and alphanumeric, such as `frontendUI`, `apiGateway`, `repoParser`.
->>>>>>> f7ef3bc (Livdoc deployment changes)
 - Put any headings or explanations OUTSIDE the ```mermaid block as normal markdown.
 
 Your final output should be 100% pure markdown that can be directly passed to marked.js (no outer "```" wrapping the entire response).
@@ -110,10 +73,6 @@ Structure:
 5. ## Key Functions / APIs
 """
 
-<<<<<<< HEAD
-        response = self.model.generate_content(prompt)
-        return response.text
-=======
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -132,7 +91,6 @@ Structure:
             ) from exc
         except APIError as exc:
             raise ValueError(f"Grok API returned an error: {exc.message}") from exc
->>>>>>> f7ef3bc (Livdoc deployment changes)
 
     async def generate_structured_analysis(
         self,
@@ -140,16 +98,7 @@ Structure:
         repository_structure: List[Dict[str, Any]],
         commit_history_summary: Optional[str] = None,
     ) -> Dict[str, Any]:
-<<<<<<< HEAD
-        """Generate a structured JSON analysis for a repository.
-
-        Security:
-        - Callers MUST only pass summarized metadata in `repository_structure`.
-        - Raw source code contents must NOT be included in the metadata.
-        """
-=======
         """Generate a structured JSON analysis for a repository."""
->>>>>>> f7ef3bc (Livdoc deployment changes)
 
         structure_json = json.dumps(repository_structure, indent=2)
 
@@ -185,10 +134,6 @@ CRITICAL OUTPUT REQUIREMENTS:
 - "dependency_graph_mermaid" MUST contain ONLY valid Mermaid syntax, starting with one of: flowchart, graph, or sequenceDiagram.
 """
 
-<<<<<<< HEAD
-        response = self.model.generate_content(prompt)
-        raw_text = (response.text or "").strip()
-=======
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
@@ -207,19 +152,11 @@ CRITICAL OUTPUT REQUIREMENTS:
             ) from exc
         except APIError as exc:
             raise ValueError(f"Grok API returned an error: {exc.message}") from exc
->>>>>>> f7ef3bc (Livdoc deployment changes)
 
         # Best-effort: try to parse the response as JSON directly.
         try:
             parsed = json.loads(raw_text)
         except json.JSONDecodeError as exc:
-<<<<<<< HEAD
-            # If the model accidentally wraps JSON in code fences or adds extra text,
-            # attempt a simple fallback by stripping common fence markers.
-            cleaned = raw_text.strip()
-            if cleaned.startswith("```") and cleaned.endswith("```"):
-                cleaned = cleaned.strip("`")
-=======
             cleaned = raw_text.strip()
             if cleaned.startswith("```"):
                 lines = cleaned.splitlines()
@@ -228,7 +165,6 @@ CRITICAL OUTPUT REQUIREMENTS:
                 if lines and lines[-1].startswith("```"):
                     lines = lines[:-1]
                 cleaned = "\n".join(lines).strip()
->>>>>>> f7ef3bc (Livdoc deployment changes)
             try:
                 parsed = json.loads(cleaned)
             except json.JSONDecodeError:
@@ -247,36 +183,6 @@ CRITICAL OUTPUT REQUIREMENTS:
         return parsed
 
     async def summarize_commits(self, repos_context: str, commit_messages: list[str]) -> str:
-<<<<<<< HEAD
-        """Use Gemini to summarize the development history from recent commit messages."""
-        if not commit_messages:
-            return "No commits found for these repositories."
-
-        commits_block = "\n".join(f"- {msg}" for msg in commit_messages)
-
-        prompt = f"""
-You are an expert software project historian.
-You are analyzing the joint commit history of the following repositories: {repos_context}
-
-Here is the aggregated commit history (from newest to oldest).
-Each line includes the repository name, commit date, author, and message:
-
-{commits_block}
-
-Based on these commits across all provided repositories, write a concise, human-readable Merged Summary of the overall system's development history and major changes over time.
-If multiple repositories are present, explain how development across them coordinated (e.g., "Frontend UI updates were followed by corresponding backend API changes").
-
-Focus on:
-- Key features added or removed across the system
-- Major refactors or architectural changes
-- Notable bug fixes or performance improvements
-
-Your response should be plain text (1–3 short paragraphs or a brief bullet list), without any Markdown headings or code blocks.
-"""
-
-        response = self.model.generate_content(prompt)
-        return (response.text or "").strip()
-=======
         """Use Grok to summarize the development history from recent commit messages into a detailed technical report."""
         if not commit_messages:
             return "No commits found for these repositories."
@@ -477,4 +383,3 @@ Provide deep, professional security insights written in complete paragraphs.
                 "### Security Remediation Roadmap\n"
                 "Implement automated static code analysis, secret scanning, and regular security patching."
             )
->>>>>>> f7ef3bc (Livdoc deployment changes)

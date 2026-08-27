@@ -1,10 +1,6 @@
 fastapi
 uvicorn[standard]
-<<<<<<< HEAD
-google-generativeai
-=======
 openai
->>>>>>> f7ef3bc (Livdoc deployment changes)
 httpx
 tree-sitter
 tree-sitter-python
@@ -13,9 +9,5 @@ python-dotenv
 motor
 python-jose[cryptography]
 passlib[bcrypt]
-<<<<<<< HEAD
-pydantic[email]
-=======
 bcrypt==4.0.1
 pydantic[email]
->>>>>>> f7ef3bc (Livdoc deployment changes)

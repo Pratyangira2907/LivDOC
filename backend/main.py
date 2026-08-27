@@ -91,8 +91,6 @@ class TriggerUpdateRequest(BaseModel):
 class CommitHistoryRequest(BaseModel):
     repo_urls: list[str]
 
-<<<<<<< HEAD
-=======
 
 class ArchitectureDiffRequest(BaseModel):
     repo_urls: list[str]
@@ -445,7 +443,6 @@ async def _get_security_risk(repo_urls: list[str]) -> dict:
         "reports": reports,
     }
 
->>>>>>> f7ef3bc (Livdoc deployment changes)
 # Helper functions for the core analysis logic so they can be reused by background tasks
 from fastapi import BackgroundTasks, HTTPException
 
@@ -469,21 +466,14 @@ async def _analyze_and_store(repo_urls: list[str], tenant_id: str = None):
         if not codebase_analysis: return
         repos_context_string = ", ".join(repo_urls)
         documentation = await ai_service.generate_documentation(codebase_analysis, repos_context_string)
-<<<<<<< HEAD
-=======
         latest_commit_shas = await _get_latest_commit_shas(repo_urls)
->>>>>>> f7ef3bc (Livdoc deployment changes)
         docs_collection = db.get_generated_docs_collection()
         doc_entry = {
             "tenant_id": tenant_id,
             "repo_urls": repo_urls,
             "documentation": documentation,
-<<<<<<< HEAD
-            "created_at": datetime.utcnow()
-=======
             "created_at": datetime.utcnow(),
             "latest_commit_shas": latest_commit_shas,
->>>>>>> f7ef3bc (Livdoc deployment changes)
         }
         await docs_collection.insert_one(doc_entry)
     except Exception as e:
@@ -537,36 +527,6 @@ async def _fetch_and_store_history(repo_urls: list[str], tenant_id: str = None):
 async def analyze_repo(payload: AnalyzeRequest, request: Request):
     """Real-time blocking endpoint for the UI dashboard."""
     tenant_id = getattr(request.state, "tenant_id", None)
-<<<<<<< HEAD
-    if not payload.repo_urls:
-        return {"status": "error", "message": "At least one repository URL must be provided."}
-    
-    # We call the helper but wait for it to finish because the UI needs the response instantly
-    try:
-        # We rewrite the helper logic here specifically so we can return the exact data map to the UI.
-        codebase_analysis = []
-        all_repo_files = await asyncio.gather(
-            *[github_service.fetch_repo_contents(url) for url in payload.repo_urls],
-            return_exceptions=True
-        )
-        for repo_url, files in zip(payload.repo_urls, all_repo_files):
-            if isinstance(files, Exception) or not files: continue
-            for file in files:
-                try:
-                    raw_code = await github_service.fetch_file_content(file["download_url"])
-                    parsed_data = parser_service.parse_file(file["name"], raw_code)
-                    parsed_data["source_repo"] = repo_url
-                    codebase_analysis.append(parsed_data)
-                except Exception as e: pass
-        if not codebase_analysis:
-            return {"status": "error", "message": "No supported source files could be parsed."}
-            
-        repos_context_string = ", ".join(payload.repo_urls)
-        documentation = await ai_service.generate_documentation(codebase_analysis, repos_context_string)
-        docs_collection = db.get_generated_docs_collection()
-        doc_entry = {
-            "tenant_id": tenant_id, "repo_urls": payload.repo_urls, "documentation": documentation, "created_at": datetime.utcnow()
-=======
     try:
         repo_urls = _normalize_repo_urls(payload.repo_urls)
     except ValueError as e:
@@ -602,7 +562,6 @@ async def analyze_repo(payload: AnalyzeRequest, request: Request):
         doc_entry = {
             "tenant_id": tenant_id, "repo_urls": repo_urls, "documentation": documentation,
             "created_at": datetime.utcnow(), "latest_commit_shas": latest_commit_shas
->>>>>>> f7ef3bc (Livdoc deployment changes)
         }
         await docs_collection.insert_one(doc_entry)
         return {"status": "success", "message": "Documentation generated successfully", "data": {"markdown": documentation}}
@@ -610,8 +569,6 @@ async def analyze_repo(payload: AnalyzeRequest, request: Request):
         return {"status": "error", "message": str(e)}
 
 
-<<<<<<< HEAD
-=======
 @app.post("/architecture-diff")
 async def architecture_diff(payload: ArchitectureDiffRequest, request: Request):
     """Compare multiple repositories and summarize structural drift between them."""
@@ -654,18 +611,10 @@ async def security_risk(payload: SecurityRiskRequest, request: Request):
         return {"status": "error", "message": str(exc)}
 
 
->>>>>>> f7ef3bc (Livdoc deployment changes)
 @app.post("/commit-history")
 async def get_commit_history(payload: CommitHistoryRequest, request: Request):
     """Real-time blocking endpoint for the UI dashboard."""
     tenant_id = getattr(request.state, "tenant_id", None)
-<<<<<<< HEAD
-    if not payload.repo_urls:
-        return {"commit_summary": "Error: At least one repository URL must be provided."}
-    try:
-        all_repo_commits = await asyncio.gather(
-            *[github_service.fetch_all_commits(url) for url in payload.repo_urls],
-=======
     try:
         repo_urls = _normalize_repo_urls(payload.repo_urls)
     except ValueError as e:
@@ -673,17 +622,12 @@ async def get_commit_history(payload: CommitHistoryRequest, request: Request):
     try:
         all_repo_commits = await asyncio.gather(
             *[github_service.fetch_all_commits(url) for url in repo_urls],
->>>>>>> f7ef3bc (Livdoc deployment changes)
             return_exceptions=True
         )
         formatted_commits_for_ai = []
         commit_history_structured = []
         fetch_errors = []
-<<<<<<< HEAD
-        for repo_url, commits in zip(payload.repo_urls, all_repo_commits):
-=======
         for repo_url, commits in zip(repo_urls, all_repo_commits):
->>>>>>> f7ef3bc (Livdoc deployment changes)
             if isinstance(commits, Exception):
                 fetch_errors.append(f"{repo_url}: {str(commits)}")
                 continue
@@ -711,19 +655,11 @@ async def get_commit_history(payload: CommitHistoryRequest, request: Request):
             }
 
         commit_history_structured.sort(key=lambda x: x.get("date", ""), reverse=True)
-<<<<<<< HEAD
-        repos_context_string = ", ".join(payload.repo_urls)
-        summary = await ai_service.summarize_commits(repos_context_string, formatted_commits_for_ai)
-        commit_collection = db.get_commit_history_collection()
-        commit_entry = {
-            "tenant_id": tenant_id, "repo_urls": payload.repo_urls, "commit_summary": summary, "commit_history": commit_history_structured, "created_at": datetime.utcnow()
-=======
         repos_context_string = ", ".join(repo_urls)
         summary = await ai_service.summarize_commits(repos_context_string, formatted_commits_for_ai)
         commit_collection = db.get_commit_history_collection()
         commit_entry = {
             "tenant_id": tenant_id, "repo_urls": repo_urls, "commit_summary": summary, "commit_history": commit_history_structured, "created_at": datetime.utcnow()
->>>>>>> f7ef3bc (Livdoc deployment changes)
         }
         await commit_collection.insert_one(commit_entry)
         return {"commit_summary": summary, "commit_history": commit_history_structured}
@@ -731,8 +667,6 @@ async def get_commit_history(payload: CommitHistoryRequest, request: Request):
         return {"commit_summary": f"Server Error: {str(e)}"}
 
 
-<<<<<<< HEAD
-=======
 @app.post("/commit-status")
 async def get_commit_status(payload: CommitHistoryRequest, request: Request):
     tenant_id = getattr(request.state, "tenant_id", None)
@@ -759,7 +693,6 @@ async def get_commit_status(payload: CommitHistoryRequest, request: Request):
         return {"status": "error", "message": str(exc)}
 
 
->>>>>>> f7ef3bc (Livdoc deployment changes)
 @app.post("/api/trigger-update")
 async def trigger_update(payload: TriggerUpdateRequest, background_tasks: BackgroundTasks):
     """
